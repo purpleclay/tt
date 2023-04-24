@@ -23,40 +23,31 @@ SOFTWARE.
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"strings"
 
-	git "github.com/purpleclay/gitz"
+	"github.com/purpleclay/tt/cmd"
 )
 
-var explicitSemVer = os.Getenv("TT_SEMVER")
+var (
+	// The current built version
+	version = ""
+	// The git branch associated with the current built version
+	gitBranch = ""
+	// The git SHA1 of the commit
+	gitCommit = ""
+	// The date associated with the current built version
+	buildDate = ""
+)
 
 func main() {
-	gitc, err := git.NewClient()
+	err := cmd.Execute(os.Stdout, cmd.BuildDetails{
+		Version:   version,
+		GitBranch: gitBranch,
+		GitCommit: gitCommit,
+		Date:      buildDate,
+	})
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
-	tags, err := gitc.Tags(git.WithShellGlob("*.*.*"),
-		git.WithSortBy(git.VersionDesc),
-		git.WithCount(1))
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	if len(tags) == 0 {
-		return
-	}
-
-	tag := tags[0]
-	if explicitSemVer == "1" && tag[0] == 'v' {
-		tag = tag[1:]
-	}
-
-	majorPos := strings.Index(tag, ".")
-	minorPos := strings.LastIndex(tag, ".")
-
-	fmt.Printf("%s,%s,%s", tag, tag[:majorPos], tag[:minorPos])
 }
